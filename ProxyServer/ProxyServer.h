@@ -11,6 +11,7 @@
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread/mutex.hpp>
+#include "../DbConnector/DbConnector.h"
 # define DEFAULT "\e[39m\e[0m"
 # define GREEN "\e[92m"
 # define RED  "\e[31m"
