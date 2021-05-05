@@ -5,11 +5,5 @@ project(boost)
 set(CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_CXX_FLAGS "-pthread")
-#set (CMAKE_CXX_FLAGS "-pedantic -ansi -Wall -Werror -O3 -L/usr/lib -lstdc++ -lpthread -lboost_thread -lboost_system")
 
-add_executable( boost
-                main.cpp
-                ProxyServer/ProxyServer.cpp
-                ProxyServer/ProxyServer.h
-                DbConnector/DbConnector.cpp
-                DbConnector/DbConnector.h)
+add_executable(ProxyServer Server/ProxyServer.cpp Server/ProxyServer.h DbConnector/DbConnector.cpp DbConnector/DbConnector.h main.cpp)

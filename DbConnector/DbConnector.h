@@ -1,43 +1,99 @@
 //
-// Created by tanzilya on 04.05.2021.
+// Created by tanzilya on 05.05.2021.
 //
 
-#ifndef BOOST_DBCONNECTER_H
-#define BOOST_DBCONNECTER_H
+#ifndef BOOST_DBCONNECTOR_H
+#define BOOST_DBCONNECTOR_H
 
-
-#include <boost/asio/io_service.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/asio.hpp>
-#include <boost/bind.hpp>
 #include <iostream>
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
+#include <string>
+
+#include <boost/bind.hpp>
+#include <boost/asio.hpp>
 
 class DbConnector {
-private:
-    boost::asio::io_service    &        _ios;
-    boost::asio::ip::tcp::endpoint      _dbEp;
-    boost::asio::ip::tcp::endpoint      _clientEp;
-    boost::asio::ip::tcp::socket        _dbSocket;
-    boost::asio::ip::tcp::socket    *   _clientSocket;
-    const static size_t                 _bufSize = 4096;
-    char                         _request[_bufSize];
-    char                         _response[_bufSize];
+
+private: //parameters
+    boost::asio::ip::tcp::socket _clientSock;
+    boost::asio::ip::tcp::socket _dbSock;
+
+    const static int bufSize = 4096;
+    unsigned char _request[bufSize];
+    unsigned char _response[bufSize];
 
 public:
-    DbConnector(boost::asio::io_service & ios, std::string host, int port,
-                boost::asio::ip::tcp::endpoint & clientEp,
-                boost::asio::ip::tcp::socket * clSock);
-    ~DbConnector();
-    void connect();
-    void connectToDb(const boost::system::error_code & ec);
-    void sendResponse(const boost::system::error_code& error, const size_t& bytes_transferred);
-    void recieveRequest(const boost::system::error_code& error);
-    void sendRequest(const boost::system::error_code& error, const size_t& bytes_transferred);
-    void recieveResponse(const boost::system::error_code& error);
+    DbConnector(boost::asio::io_service& ios) : _clientSock(ios), _dbSock (ios) {}
 
+    void connect(const std::string& dbHost, int dbPort) {
+        _dbSock.async_connect(boost::asio::ip::tcp::endpoint(
+                boost::asio::ip::address::from_string(dbHost), dbPort),
+                boost::bind(&DbConnector::startDataExchange, this,
+                boost::asio::placeholders::error));
+    }
+
+    void startDataExchange(const boost::system::error_code& error) {
+        if (errorOccurred(error))
+            return;
+        _dbSock.async_read_some(boost::asio::buffer(_response, bufSize),
+                                boost::bind(&DbConnector::sendResponse, this,
+                                            boost::asio::placeholders::error,
+                                            boost::asio::placeholders::bytes_transferred));
+        _clientSock.async_read_some(boost::asio::buffer(_request, bufSize),
+                                boost::bind(&DbConnector::sendRequest, this,
+                                            boost::asio::placeholders::error,
+                                            boost::asio::placeholders::bytes_transferred));
+    }
+
+    boost::asio::ip::tcp::socket & getClientSock() {
+        return _clientSock;
+    }
+
+private: //methods
+    void sendResponse(const boost::system::error_code& error, const size_t& bytes_transferred) {
+            if (errorOccurred(error))
+                return;
+            async_write(_clientSock, boost::asio::buffer(_response, bytes_transferred),
+                        boost::bind(&DbConnector::recieveResponse, this,
+                                    boost::asio::placeholders::error));
+        }
+
+        void recieveResponse(const boost::system::error_code& error) {
+            if (errorOccurred(error))
+                return;
+            _dbSock.async_read_some(boost::asio::buffer(_response, bufSize),
+                                    boost::bind(&DbConnector::sendResponse, this,
+                                    boost::asio::placeholders::error,
+                                    boost::asio::placeholders::bytes_transferred));
+        }
+
+        void sendRequest(const boost::system::error_code& error, const size_t& bytes_transferred) {
+            if (errorOccurred(error))
+                return;
+            async_write(_dbSock, boost::asio::buffer(_request, bytes_transferred),
+                        boost::bind(&DbConnector::recieveRequest, this,
+                                    boost::asio::placeholders::error));
+        }
+
+        void recieveRequest(const boost::system::error_code& error) {
+            if (errorOccurred(error))
+                return;
+            _clientSock.async_read_some(boost::asio::buffer(_request, bufSize),
+                                        boost::bind(&DbConnector::sendRequest, this,
+                                        boost::asio::placeholders::error,
+                                        boost::asio::placeholders::bytes_transferred));
+        }
+
+        bool errorOccurred(const boost::system::error_code& error) {
+            if (!error)
+                return false;
+            endOfSession();
+            return true;
+        }
+
+        void endOfSession() {
+            _clientSock.close();
+            _dbSock.close();
+        }
 };
 
-
-#endif //BOOST_DBCONNECTER_H
+#endif //BOOST_DBCONNECTOR_H
