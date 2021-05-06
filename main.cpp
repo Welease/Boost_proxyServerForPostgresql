@@ -14,8 +14,8 @@ int main(int argc, char **argv) {
             std::cout << RED << "Incorrect file from logs" << DEFAULT << std::endl;
             return 0;
         }
-        ProxyServer proxyServer(ios, proxyIp, proxyPort, dbIp, dbPort, fdLog);
         try {
+            ProxyServer proxyServer(ios, proxyIp, proxyPort, dbIp, dbPort, fdLog);
             proxyServer.acceptConnections();
             ios.run();
         } catch (std::exception & ex) {

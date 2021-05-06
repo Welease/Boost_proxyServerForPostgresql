@@ -40,7 +40,6 @@ private: //methods
     void sendResponse(const boost::system::error_code& error, const size_t& bytes_transferred);
     bool errorOccurred(const boost::system::error_code& error);
     void endOfSession();
-    void parseStartupData();
     int  getIntFromHex(unsigned char *hex);
     void writeInfo(const char *header, size_t len1, const char *message, size_t len);
     void makeLog();
