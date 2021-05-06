@@ -1,4 +1,4 @@
-#ProxyServerForPostgresql BOOST_REALISATION
+#ProxyServerForPostgresql BOOST IMPLEMENTATION
 
 Usage: ./proxy "proxy server ip" "proxy server port" "database host ip" "database port" "file for logs"
 
