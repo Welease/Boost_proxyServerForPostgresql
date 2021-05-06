@@ -10,12 +10,17 @@ ProxyServer::ProxyServer(boost::asio::io_service &ios,  std::string host, int po
                                                         boost::asio::ip::address_v4::from_string(host), port)),
                                                         _dbPort(dbPort), _dbHost(std::move(dbHost)),
                                                         _session(nullptr),
-                                                        _fdLog(fd){}
+                                                        _fdLog(fd){
+    std::cout << GREEN << "ProxyServer started working" << DEFAULT << std::endl;
+    signal(SIGPIPE, SIG_IGN);
+}
 
-ProxyServer::~ProxyServer() = default;
+ProxyServer::~ProxyServer() {
+    close(_fdLog);
+}
 
 void ProxyServer::acceptConnections() {
-    _session = new DbConnector(_ios);
+    _session = new DbConnector(_ios, _fdLog);
     _acc.async_accept(_session->getClientSock(),
                       boost::bind(&ProxyServer::startRequestProcessing,this,
                               boost::asio::placeholders::error));

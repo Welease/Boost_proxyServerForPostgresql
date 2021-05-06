@@ -6,6 +6,12 @@
 #define BOOST_PROXYSERVER_H
 
 #include "../DbConnector/DbConnector.h"
+# define DEFAULT "\e[39m\e[0m"
+# define GREEN "\e[92m"
+# define RED  "\e[31m"
+# define YELLOW "\e[1;33m"
+# define BLUE "\e[1;34m"
+# define BUF_SIZE 1000000
 
 class ProxyServer {
 
